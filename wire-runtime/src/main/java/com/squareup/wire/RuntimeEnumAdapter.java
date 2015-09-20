@@ -19,6 +19,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 
+import static com.squareup.wire.ProtoWriter.varint32Size;
+
 /**
  * Converts values of an enum to and from integers.
  */
@@ -66,10 +68,11 @@ final class RuntimeEnumAdapter<E extends WireEnum> extends ProtoAdapter<E> {
   }
 
   @Override public int encodedSize(E value) {
-    return ProtoWriter.varint32Size(value.getValue());
+    return value != null ? varint32Size(value.getValue()) : 0;
   }
 
   @Override public void encode(ProtoWriter writer, E value) throws IOException {
+    if (value == null) return;
     writer.writeVarint32(value.getValue());
   }
 

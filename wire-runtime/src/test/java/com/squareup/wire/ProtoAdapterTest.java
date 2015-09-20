@@ -16,6 +16,10 @@
 package com.squareup.wire;
 
 import com.squareup.wire.protos.person.Person;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import okio.Buffer;
 import okio.ByteString;
 import org.junit.Test;
 
@@ -42,6 +46,42 @@ public final class ProtoAdapterTest {
       fail();
     } catch (IllegalArgumentException expected) {
       assertThat(expected).hasMessageStartingWith("failed to access ");
+    }
+  }
+
+  @Test public void nullSafe() throws IOException {
+    List<ProtoAdapter<?>> adapters = Arrays.<ProtoAdapter<?>>asList(
+        ProtoAdapter.BOOL,
+        ProtoAdapter.BYTES,
+        ProtoAdapter.DOUBLE,
+        ProtoAdapter.FIXED32,
+        ProtoAdapter.FIXED64,
+        ProtoAdapter.FLOAT,
+        ProtoAdapter.INT32,
+        ProtoAdapter.INT64,
+        ProtoAdapter.SFIXED32,
+        ProtoAdapter.SFIXED64,
+        ProtoAdapter.SINT32,
+        ProtoAdapter.SINT64,
+        ProtoAdapter.STRING,
+        ProtoAdapter.UINT32,
+        ProtoAdapter.UINT64,
+        ProtoAdapter.newMessageAdapter(Person.class),
+        ProtoAdapter.newEnumAdapter(Person.PhoneType.class)
+    );
+    Buffer buffer = new Buffer();
+    ProtoWriter writer = new ProtoWriter(buffer);
+    for (ProtoAdapter<?> adapter : adapters) {
+      assertThat(adapter.encodedSize(null)).isZero();
+      assertThat(adapter.encodedSize(1, null)).isZero();
+
+      adapter.encode(writer, null);
+      assertThat(buffer.size()).isZero();
+
+      adapter.encodeTagged(writer, 1, null);
+      assertThat(buffer.size()).isZero();
+
+      assertThat(adapter.redact(null)).isNull();
     }
   }
 }

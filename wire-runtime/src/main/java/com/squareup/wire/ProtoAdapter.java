@@ -82,22 +82,33 @@ public abstract class ProtoAdapter<E> {
     }
   }
 
-  /** Returns the redacted form of {@code value}. */
+  /**
+   * Returns the redacted form of {@code value}.
+   *
+   * @param value Data to redact or null.
+   */
   public E redact(E value) {
     return null;
   }
 
   /**
-   * The size of the non-null data {@code value}. This does not include the size required for
-   * a length-delimited prefix (should the type require one).
+   * The encoded size of {@code value} in the wire format. This does not include the size required
+   * for a length-delimited prefix (should the type require one).
+   *
+   * @param value Data to size or null.
    */
   public abstract int encodedSize(E value);
 
   /**
-   * The size of {@code tag} and non-null {@code value} in the wire format. This size includes the
+   * The encoded size of {@code tag} and {@code value} in the wire format. This size includes the
    * tag, type, length-delimited prefix (should the type require one), and value.
+   *
+   * @param value Data to size or null.
    */
   public int encodedSize(int tag, E value) {
+    if (value == null) {
+      return 0;
+    }
     int size = encodedSize(value);
     if (fieldEncoding == FieldEncoding.LENGTH_DELIMITED) {
       size += varint32Size(size);
@@ -105,11 +116,22 @@ public abstract class ProtoAdapter<E> {
     return size + ProtoWriter.tagSize(tag);
   }
 
-  /** Write non-null {@code value} to {@code writer}. */
+  /**
+   * Write {@code value} to {@code writer}.
+   *
+   * @param value Data to write or null.
+   */
   public abstract void encode(ProtoWriter writer, E value) throws IOException;
 
-  /** Write {@code tag} and non-null {@code value} to {@code writer}. */
+  /**
+   * Write {@code tag} and {@code value} to {@code writer}.
+   *
+   * @param value Data to write or null.
+   */
   public void encodeTagged(ProtoWriter writer, int tag, E value) throws IOException {
+    if (value == null) {
+      return;
+    }
     writer.writeTag(tag, fieldEncoding);
     if (fieldEncoding == FieldEncoding.LENGTH_DELIMITED) {
       writer.writeVarint32(encodedSize(value));
@@ -189,10 +211,11 @@ public abstract class ProtoAdapter<E> {
   public static final ProtoAdapter<Boolean> BOOL = new ProtoAdapter<Boolean>(
       FieldEncoding.VARINT, Boolean.class) {
     @Override public int encodedSize(Boolean value) {
-      return FIXED_BOOL_SIZE;
+      return value != null ? FIXED_BOOL_SIZE : 0;
     }
 
     @Override public void encode(ProtoWriter writer, Boolean value) throws IOException {
+      if (value == null) return;
       writer.writeVarint32(value ? 1 : 0);
     }
 
@@ -206,10 +229,11 @@ public abstract class ProtoAdapter<E> {
   public static final ProtoAdapter<Integer> INT32 = new ProtoAdapter<Integer>(
       FieldEncoding.VARINT, Integer.class) {
     @Override public int encodedSize(Integer value) {
-      return int32Size(value);
+      return value != null ? int32Size(value) : 0;
     }
 
     @Override public void encode(ProtoWriter writer, Integer value) throws IOException {
+      if (value == null) return;
       writer.writeSignedVarint32(value);
     }
 
@@ -220,10 +244,11 @@ public abstract class ProtoAdapter<E> {
   public static final ProtoAdapter<Integer> UINT32 = new ProtoAdapter<Integer>(
       FieldEncoding.VARINT, Integer.class) {
     @Override public int encodedSize(Integer value) {
-      return varint32Size(value);
+      return value != null ? varint32Size(value) : 0;
     }
 
     @Override public void encode(ProtoWriter writer, Integer value) throws IOException {
+      if (value == null) return;
       writer.writeVarint32(value);
     }
 
@@ -234,10 +259,11 @@ public abstract class ProtoAdapter<E> {
   public static final ProtoAdapter<Integer> SINT32 = new ProtoAdapter<Integer>(
       FieldEncoding.VARINT, Integer.class) {
     @Override public int encodedSize(Integer value) {
-      return varint32Size(encodeZigZag32(value));
+      return value != null ? varint32Size(encodeZigZag32(value)) : 0;
     }
 
     @Override public void encode(ProtoWriter writer, Integer value) throws IOException {
+      if (value == null) return;
       writer.writeVarint32(encodeZigZag32(value));
     }
 
@@ -248,10 +274,11 @@ public abstract class ProtoAdapter<E> {
   public static final ProtoAdapter<Integer> FIXED32 = new ProtoAdapter<Integer>(
       FieldEncoding.FIXED32, Integer.class) {
     @Override public int encodedSize(Integer value) {
-      return FIXED_32_SIZE;
+      return value != null ? FIXED_32_SIZE : 0;
     }
 
     @Override public void encode(ProtoWriter writer, Integer value) throws IOException {
+      if (value == null) return;
       writer.writeFixed32(value);
     }
 
@@ -263,10 +290,11 @@ public abstract class ProtoAdapter<E> {
   public static final ProtoAdapter<Long> INT64 = new ProtoAdapter<Long>(
       FieldEncoding.VARINT, Long.class) {
     @Override public int encodedSize(Long value) {
-      return varint64Size(value);
+      return value != null ? varint64Size(value) : 0;
     }
 
     @Override public void encode(ProtoWriter writer, Long value) throws IOException {
+      if (value == null) return;
       writer.writeVarint64(value);
     }
 
@@ -281,10 +309,11 @@ public abstract class ProtoAdapter<E> {
   public static final ProtoAdapter<Long> UINT64 = new ProtoAdapter<Long>(
       FieldEncoding.VARINT, Long.class) {
     @Override public int encodedSize(Long value) {
-      return varint64Size(value);
+      return value != null ? varint64Size(value) : 0;
     }
 
     @Override public void encode(ProtoWriter writer, Long value) throws IOException {
+      if (value == null) return;
       writer.writeVarint64(value);
     }
 
@@ -295,10 +324,11 @@ public abstract class ProtoAdapter<E> {
   public static final ProtoAdapter<Long> SINT64 = new ProtoAdapter<Long>(
       FieldEncoding.VARINT, Long.class) {
     @Override public int encodedSize(Long value) {
-      return varint64Size(encodeZigZag64(value));
+      return value != null ? varint64Size(encodeZigZag64(value)) : 0;
     }
 
     @Override public void encode(ProtoWriter writer, Long value) throws IOException {
+      if (value == null) return;
       writer.writeVarint64(encodeZigZag64(value));
     }
 
@@ -309,10 +339,11 @@ public abstract class ProtoAdapter<E> {
   public static final ProtoAdapter<Long> FIXED64 = new ProtoAdapter<Long>(
       FieldEncoding.FIXED64, Long.class) {
     @Override public int encodedSize(Long value) {
-      return FIXED_64_SIZE;
+      return value != null ? FIXED_64_SIZE : 0;
     }
 
     @Override public void encode(ProtoWriter writer, Long value) throws IOException {
+      if (value == null) return;
       writer.writeFixed64(value);
     }
 
@@ -324,10 +355,11 @@ public abstract class ProtoAdapter<E> {
   public static final ProtoAdapter<Float> FLOAT = new ProtoAdapter<Float>(
       FieldEncoding.FIXED32, Float.class) {
     @Override public int encodedSize(Float value) {
-      return FIXED_32_SIZE;
+      return value != null ? FIXED_32_SIZE : 0;
     }
 
     @Override public void encode(ProtoWriter writer, Float value) throws IOException {
+      if (value == null) return;
       writer.writeFixed32(floatToIntBits(value));
     }
 
@@ -338,10 +370,11 @@ public abstract class ProtoAdapter<E> {
   public static final ProtoAdapter<Double> DOUBLE = new ProtoAdapter<Double>(
       FieldEncoding.FIXED64, Double.class) {
     @Override public int encodedSize(Double value) {
-      return FIXED_64_SIZE;
+      return value != null ? FIXED_64_SIZE : 0;
     }
 
     @Override public void encode(ProtoWriter writer, Double value) throws IOException {
+      if (value == null) return;
       writer.writeFixed64(doubleToLongBits(value));
     }
 
@@ -352,10 +385,11 @@ public abstract class ProtoAdapter<E> {
   public static final ProtoAdapter<String> STRING = new ProtoAdapter<String>(
       FieldEncoding.LENGTH_DELIMITED, String.class) {
     @Override public int encodedSize(String value) {
-      return utf8Length(value);
+      return value != null ? utf8Length(value) : 0;
     }
 
     @Override public void encode(ProtoWriter writer, String value) throws IOException {
+      if (value == null) return;
       writer.writeString(value);
     }
 
@@ -366,10 +400,11 @@ public abstract class ProtoAdapter<E> {
   public static final ProtoAdapter<ByteString> BYTES = new ProtoAdapter<ByteString>(
       FieldEncoding.LENGTH_DELIMITED, ByteString.class) {
     @Override public int encodedSize(ByteString value) {
-      return value.size();
+      return value != null ? value.size() : 0;
     }
 
     @Override public void encode(ProtoWriter writer, ByteString value) throws IOException {
+      if (value == null) return;
       writer.writeBytes(value);
     }
 

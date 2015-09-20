@@ -101,6 +101,8 @@ final class RuntimeMessageAdapter<M extends Message<M>, B extends Builder<M, B>>
   }
 
   @Override public int encodedSize(M message) {
+    if (message == null) return 0;
+
     int cachedSerializedSize = message.cachedSerializedSize;
     if (cachedSerializedSize != 0) return cachedSerializedSize;
 
@@ -117,6 +119,7 @@ final class RuntimeMessageAdapter<M extends Message<M>, B extends Builder<M, B>>
   }
 
   @Override public void encode(ProtoWriter writer, M message) throws IOException {
+    if (message == null) return;
     for (FieldBinding<M, B> fieldBinding : fieldBindings.values()) {
       Object value = fieldBinding.get(message);
       if (value == null) continue;
@@ -126,6 +129,7 @@ final class RuntimeMessageAdapter<M extends Message<M>, B extends Builder<M, B>>
   }
 
   @Override public M redact(M message) {
+    if (message == null) return null;
     B builder = newBuilder(message);
     for (FieldBinding<M, B> fieldBinding : fieldBindings.values()) {
       if (!fieldBinding.redacted
